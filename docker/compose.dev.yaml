@@ -1,0 +1,43 @@
+name: template
+services:
+  db:
+    image: postgres:17-alpine
+    command: postgres -c 'max_connections=200'
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    restart: always
+
+  nginx:
+    command: nginx -g "daemon off;"
+    depends_on:
+      - api
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf
+      - static:/var/www/app/static
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  api:
+    build:
+      context: ../src
+      dockerfile: ./Dockerfile
+    command: bash -c 'python3 manage.py collectstatic --no-input; python3 manage.py migrate; uvicorn core.asgi:application --port 8000 --host 0.0.0.0'
+    volumes:
+      - ../src/:/app/
+      - static:/app/static
+    depends_on:
+      - db
+    restart: always
+    env_file:
+      - ../.env
+
+
+volumes:
+  postgresql-data:
+  static:
