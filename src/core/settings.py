@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'djangoql',
     'corsheaders',
+    "applications.users",
 ]
 
 MIDDLEWARE = [
